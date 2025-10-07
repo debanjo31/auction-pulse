@@ -1,16 +1,16 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/auction/src",
+  "sourceRoot": "apps/user/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/auction/tsconfig.app.json"
+    "tsConfigPath": "apps/user/tsconfig.app.json"
   },
   "monorepo": true,
-  "root": "apps/auction",
+  "root": "apps/user",
   "projects": {
-    "auction-pulse": {
+    "auction": {
       "type": "application",
       "root": "apps/auction",
       "entryFile": "main",
@@ -26,6 +26,15 @@
       "sourceRoot": "apps/auth/src",
       "compilerOptions": {
         "tsConfigPath": "apps/auth/tsconfig.app.json"
+      }
+    },
+    "bid": {
+      "type": "application",
+      "root": "apps/bid",
+      "entryFile": "main",
+      "sourceRoot": "apps/bid/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/bid/tsconfig.app.json"
       }
     },
     "common": {
@@ -44,6 +53,24 @@
       "sourceRoot": "apps/logging/src",
       "compilerOptions": {
         "tsConfigPath": "apps/logging/tsconfig.app.json"
+      }
+    },
+    "notification": {
+      "type": "application",
+      "root": "apps/notification",
+      "entryFile": "main",
+      "sourceRoot": "apps/notification/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notification/tsconfig.app.json"
+      }
+    },
+    "user": {
+      "type": "application",
+      "root": "apps/user",
+      "entryFile": "main",
+      "sourceRoot": "apps/user/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user/tsconfig.app.json"
       }
     },
     "wallet": {

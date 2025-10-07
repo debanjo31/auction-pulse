@@ -1,89 +1,95 @@
-version: "3.1"
+version: "3.8"
 
-services:
-  mysql:
-    image: mysql:8.0
-    container_name: auction-pulse-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: my-secret-pw
-      MYSQL_DATABASE: auction-pulse_db
-      MYSQL_USER: auction-pulse_user
-      MYSQL_PASSWORD: auction-pulse_password
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - auction-pulse-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 10s
-      retries: 10
-      interval: 30s
+  services:
+    postgres:
+      image: postgres:14
+      container_name: auction-pulse-postgres
+      environment:
+        POSTGRES_USER: user
+        POSTGRES_PASSWORD: pass
+        POSTGRES_DB: auctionpulse
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+        - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      networks:
+        - auction-pulse-network
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U user -d auctionpulse || exit 1"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
 
-  redis:
-    image: redis:7-alpine
-    container_name: auction-pulse-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - auction-pulse-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      timeout: 10s
-      retries: 5
-      interval: 30s
-    command: redis-server --appendonly yes
+    redis:
+      image: redis:7
+      container_name: auction-pulse-redis
+      ports:
+        - "6379:6379"
+      volumes:
+        - redis_data:/data
+      networks:
+        - auction-pulse-network
+      command: ["redis-server", "--appendonly", "yes"]
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
 
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: auction-pulse-rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: auction-pulse
-      RABBITMQ_DEFAULT_PASS: auction-pulse123
-      RABBITMQ_DEFAULT_VHOST: auction-pulse_vhost
-    ports:
-      - "5672:5672" # AMQP port
-      - "15672:15672" # Management UI port
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
-      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-    networks:
-      - auction-pulse-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      timeout: 10s
-      retries: 10
-      interval: 30s
+    zookeeper:
+      image: confluentinc/cp-zookeeper:7.0.1
+      container_name: auction-pulse-zookeeper
+      environment:
+        ZOOKEEPER_CLIENT_PORT: 2181
+        ZOOKEEPER_TICK_TIME: 2000
+      ports:
+        - "2181:2181"
+      volumes:
+        - zookeeper_data:/var/lib/zookeeper/data
+      networks:
+        - auction-pulse-network
+      healthcheck:
+        test: ["CMD-SHELL", "echo ruok | nc -w 2 localhost 2181 || true"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
 
-  mongo:
-    image: mongo:6.0
-    container_name: auction-pulse-mongo
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password123
-      MONGO_INITDB_DATABASE: auction-pulse_db
-    ports:
-      - "27017:27017"
-    volumes:
-      - ./mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-    networks:
-      - auction-pulse-network
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      timeout: 10s
-      retries: 5
-      interval: 30s
+    kafka:
+      image: confluentinc/cp-kafka:7.0.1
+      container_name: auction-pulse-kafka
+      depends_on:
+        - zookeeper
+      environment:
+        KAFKA_BROKER_ID: 1
+        KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      ports:
+        - "9092:9092"
+      volumes:
+        - kafka_data:/var/lib/kafka/data
+      networks:
+        - auction-pulse-network
+      healthcheck:
+        test:
+          [
+            "CMD-SHELL",
+            "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1",
+          ]
+        interval: 15s
+        timeout: 5s
+        retries: 8
 
-volumes:
-  mysql_data:
-  redis_data:
-  rabbitmq_data:
+  volumes:
+    postgres_data:
+    redis_data:
+    zookeeper_data:
+    kafka_data:
 
-networks:
-  auction-pulse-network:
-    driver: bridge
+  networks:
+    auction-pulse-network:
+      driver: bridge
