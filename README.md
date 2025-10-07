@@ -1,98 +1,188 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# AuctionPulse
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+AuctionPulse is a secure, microservices-based online auction platform built with NestJS. It provides a scalable, extensible foundation for running auctions with virtual wallets, admin verification, real-time bidding, and reliable transaction handling.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The API enables users to create, participate in, and manage auctions securely. Sellers can list items with start/end dates, opening prices, and photos. Admins verify listings to prevent illegal or stolen items. Participants top up virtual wallets via integrated payments and place bids during active auctions. The platform coordinates bidding logic, transaction management, and auction resolution to ensure fairness and transparency.
 
-## Description
+Primary goal: provide a user-friendly, scalable alternative to traditional auction sites by simplifying payments through virtual wallets and improving safety with admin verification and real-time notifications.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Key features
 
-## Project setup
+- User management: register, authenticate (JWT), and manage profiles.
+- Auction creation: sellers list items with title, description, photos, start/end times, and opening price.
+- Admin verification: review and approve/reject listings to ensure legality and authenticity.
+- Wallet system: top up wallets via payment gateways (e.g., Stripe), track balances, and reserve funds for active bids.
+- Bidding: place bids with real-time updates; system validates funds and auction status before accepting bids.
+- Auction resolution: automatic resolution at auction end (determine winner, transfer funds, refund outbid users).
+- Notifications: real-time alerts for outbids and auction updates via WebSockets (or Kafka + Redis + push/email fallbacks).
+- Redis-backed caching and pub/sub for high-performance real-time flows and temporary state (bid locks, reservation cache, leaderboards).
 
-```bash
-$ npm install
-```
+## Architecture overview
 
-## Compile and run the project
+AuctionPulse uses a microservices architecture built with NestJS and TypeORM (or your preferred ORM adapter for PostgreSQL). Services communicate via event-driven messaging (Kafka) and use Redis for caching and lightweight pub/sub.
 
-```bash
-# development
-$ npm run start
+Services (logical boundaries):
 
-# watch mode
-$ npm run start:dev
+- User Service: registration, authentication (JWT), user profiles.
+- Wallet Service: manages balances, top-ups, reservations, and transfers.
+- Auction Service: create/update auctions, status transitions, scheduling start/end events.
+- Bid Service: processes incoming bids, validates funds/reservations, debounces/serializes bid operations.
+- Notification Service: delivers real-time updates (WebSockets/Socket.io) and email/push notifications.
 
-# production mode
-$ npm run start:prod
-```
+Typical flows:
 
-## Run tests
+- Listing flow: Seller -> Auction Service -> Admin verification -> Auction Service publishes Approved event
+- Bidding flow: Client -> Bid Service -> Wallet Service (reserve funds) -> Bid accepted -> Notification Service publishes outbid/leading events
+- Resolution flow: Auction Service triggers end-of-auction -> Bid Service finalizes winner -> Wallet Service transfers funds -> Notification Service notifies participants
 
-```bash
-# unit tests
-$ npm run test
+## Tech & system requirements
 
-# e2e tests
-$ npm run test:e2e
+- Node.js v18 or higher
+- pnpm v8 or higher (or npm/yarn if you adapt commands)
+- PostgreSQL v14 or higher (production-grade DB)
+- Kafka (e.g., Apache Kafka v3.x or Confluent Platform)
+- Redis v7 or higher (caching and pub/sub)
+- Docker & Docker Compose (recommended for local development)
 
-# test coverage
-$ npm run test:cov
-```
+## Local development (quick start)
 
-## Deployment
+1. Clone the repository:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+   ```powershell
+   git clone https://github.com/your-repo/auction-pulse.git
+   cd auction-pulse
+   ```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+2. Install dependencies:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+   ```powershell
+   pnpm install
+   ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+3. Start required infrastructure (Postgres, Kafka, Redis) for local development. Example uses Docker Compose:
 
-## Resources
+   ```powershell
+   docker-compose up -d postgres kafka redis
+   ```
 
-Check out a few resources that may come in handy when working with NestJS:
+   Example docker-compose snippet for local dev (add this to your `docker-compose.yml` or adapt it):
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+   ```yaml
+   services:
+     postgres:
+       image: postgres:14
+       environment:
+         POSTGRES_USER: user
+         POSTGRES_PASSWORD: pass
+         POSTGRES_DB: auctionpulse
+       ports:
+         - '5432:5432'
+     kafka:
+       image: confluentinc/cp-kafka:7.0.1
+       environment:
+         KAFKA_BROKER_ID: 1
+         KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+         KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+         KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+       ports:
+         - '9092:9092'
+     redis:
+       image: redis:7
+       ports:
+         - '6379:6379'
+   ```
 
-## Support
+4. Create service-specific `.env` files
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+   Each microservice should have its own `.env` in its root directory (for example `apps/user/.env`). Example values:
 
-## Stay in touch
+   ```env
+   DATABASE_URL=postgresql://user:pass@localhost:5432/auctionpulse?schema=public
+   JWT_SECRET=your-secret-key
+   STRIPE_API_KEY=your-stripe-key
+   KAFKA_BROKER=localhost:9092
+   REDIS_HOST=localhost
+   REDIS_PORT=6379
+   PORT=3000
+   ```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+5. Run database migrations (example uses TypeORM CLI configured in the repo):
 
-## License
+   ```powershell
+   pnpm typeorm migration:run
+   ```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+6. Start services in development mode (each microservice typically has its own script). From the monorepo root you might run:
+
+   ```powershell
+   pnpm start:dev
+   ```
+
+   By convention each microservice runs on a different port (e.g., 3000..3004). Check each service's README or `package.json` scripts for exact commands.
+
+## Redis usage
+
+Redis is used for:
+
+- Caching frequently-read entities (auction listing metadata, thumbnails, computed leaderboards)
+- Short-lived bid reservations and locks to avoid double-spend
+- Pub/sub fallback (low-latency notifications between services or clustered WebSocket nodes)
+
+Recommended patterns:
+
+- Use Redis keys with TTL for bid reservations: `bid:reservation:{auctionId}:{userId}`
+- Use Redis streams (or Kafka) for ordered event consumption if you need durable replays
+- Avoid storing authoritative long-term state in Redis — keep PostgreSQL for persistence
+
+## Kafka integration
+
+- Use NestJS microservices with Kafka transport via `@nestjs/microservices` for cross-service events.
+- Topic examples: `auction.events`, `bid.events`, `wallet.events`, `notification.events`.
+- Design for at-least-once delivery: make idempotent consumers (use event ids or dedupe store).
+
+## API behaviour & security
+
+- Authentication: JWT tokens issued by the User Service. Services validate JWTs or use service-to-service auth where appropriate.
+- Authorization: role-based checks (USER, SELLER, ADMIN) to protect admin endpoints and listing controls.
+- Concurrency: Bid processing must validate the auction is active, verify/reserve funds in Wallet Service, and then persist the accepted bid.
+- Edge cases to consider: clock skew (use UTC + server time sync), network partitions (Kafka retries), partial failures during resolution (use compensating transactions).
+
+## Personas
+
+- Seller (User): Age 25–50, tech-savvy individual or small business owner. Needs easy listing tools and admin verification for credibility.
+- Bidder (User): Age 18–45, bargain hunter or collector. Requires simple wallet top-up, real-time bid updates, and secure transactions.
+- Admin: Platform moderator, age 30+, responsible for verifying auctions and handling disputes. Needs a dashboard for oversight and actionable verification workflows.
+
+## User scenarios
+
+- Seller scenario: Jane logs in, uploads item photos and details, sets a 7-day auction with a $50 opening price starting next week. She submits the listing for admin review and receives an approval notification.
+
+- Bidder scenario: Mike tops up his wallet with $200 via credit card, searches for "vintage watches", places a $60 bid on an active auction, gets outbid, receives a real-time notification, and rebids $70.
+
+- Admin scenario: Admin reviews a new auction listing, checks for illegal content (e.g., no weapons), verifies item authenticity via uploaded proofs, and approves or rejects with feedback.
+
+- Auction end scenario: At the end time the system determines the highest bidder, transfers funds from their wallet to the seller's wallet, and notifies all participants. Outbid users receive refunds of reserved funds.
+
+## Testing
+
+- Unit and integration tests are planned with Jest. Run tests with:
+
+  ```powershell
+  pnpm test
+  ```
+
+- For end-to-end tests, spin up the local infrastructure (`docker-compose`) and run the e2e suites configured per service.
+
+## Scaling & production notes
+
+- Deploy microservices in containers (Docker) and manage with Kubernetes for high availability.
+- Use Kafka partitions and consumer groups to distribute load across multiple consumers for bid and audit streams.
+- Use Redis for caching and to coordinate WebSocket clusters (pub/sub) — but keep persistent state in PostgreSQL.
+- Monitor and alert using Prometheus/Grafana; instrument services with metrics (latency, error rates, bid throughput).
+- Ensure transactional safety on money transfers: prefer database-level transactions where possible and design robust compensating workflows when spanning services.
+
+## Running in Docker (production/dev)
+
+- Build Docker images for each service and deploy with Docker Compose or Kubernetes manifests.
+- For production, replace local credentials with secrets managers (Azure Key Vault, AWS Secrets Manager, HashiCorp Vault).
+
