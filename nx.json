@@ -41,7 +41,10 @@
       "exclude": [
         "apps/api-gateway-e2e/**/*",
         "user-ms-e2e/**/*",
-        "apps/user-ms-e2e/**/*"
+        "apps/user-ms-e2e/**/*",
+        "apps/wallet-ms-e2e/**/*",
+        "apps/notification-ms-e2e/**/*",
+        "apps/auction-ms-e2e/**/*"
       ]
     }
   ]
