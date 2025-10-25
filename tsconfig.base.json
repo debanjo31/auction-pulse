@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@auction-pulse/shared-dto": ["shared-dto/src/index.ts"]
+      "@auction-pulse/shared-dto": ["shared-dto/src/index.ts"],
+      "@auction-pulse/auth": ["auth/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
