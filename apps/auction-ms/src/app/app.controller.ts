@@ -18,7 +18,5 @@ export class AppController {
   handleOrderCreated(@Payload() auction: any) {
     console.log('[Auction-Service]: Received new auction:', auction);
     // Simulate Processing the auction started
-
-    this.kafkaClient.emit('auction-started-processed', auction);
   }
 }
