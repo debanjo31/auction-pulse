@@ -16,7 +16,11 @@
     "baseUrl": ".",
     "paths": {
       "@auction-pulse/shared-dto": ["shared-dto/src/index.ts"],
-      "@auction-pulse/auth": ["auth/src/index.ts"]
+      "@auction-pulse/auth": ["auth/src/index.ts"],
+      "@auction-pulse/my-shared-types": ["my-shared-types/src/index.ts"],
+      "@auction-pulse/database": ["database/src/index.ts"],
+      "@auction-pulse/config": ["config/src/index.ts"],
+      "@auction-pulse/shared-dtos": ["shared-dtos/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -12,15 +12,19 @@ async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
-      transport: Transport.TCP,
+      transport: Transport.KAFKA,
       options: {
-        host: '127.0.0.1',
-        port: 8877,
+        client: {
+          brokers: ['localhost:9092'],
+        },
+        consumer: {
+          groupId: 'notification-consumer-group',
+        },
       },
     }
   );
   await app.listen().then(() => {
-    Logger.log('Auction microservice is listening');
+    Logger.log('Notification microservice is listening to Kafka');
   });
 }
 

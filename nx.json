@@ -47,5 +47,8 @@
         "apps/auction-ms-e2e/**/*"
       ]
     }
-  ]
+  ],
+  "workspaceLayout": {
+    "libsDir": "libs"
+  }
 }
